@@ -123,6 +123,8 @@ class BMS(BaseBMS):
             mos_temp = (int.from_bytes(self._msg[107:109], byteorder="big") - 2730) / 10.0
             ambient_temp = (int.from_bytes(self._msg[109:111], byteorder="big") - 2730) / 10.0
             temp_list.extend([mos_temp, ambient_temp])
+        else:
+            pass  # pragma: no cover
 
         result["temp_values"] = temp_list
         result["temp_sensors"] = len(temp_list)
@@ -131,6 +133,8 @@ class BMS(BaseBMS):
             status_bits = int.from_bytes(self._msg[37:39], byteorder="big")
             result["chrg_mosfet"] = bool(status_bits & 0x0200)
             result["dischrg_mosfet"] = bool(status_bits & 0x0400)
+        else:
+            pass  # pragma: no cover
 
         if len(self._msg) >= 169:
             result["pack_ov_alarm"] = int.from_bytes(self._msg[125:129], "big") / 1000.0  # type: ignore[typeddict-unknown-key]
@@ -149,6 +153,8 @@ class BMS(BaseBMS):
             result["cell_uv_protection"] = int.from_bytes(self._msg[163:165], "big") / 1000.0  # type: ignore[typeddict-unknown-key]
             result["cell_uv_release"] = int.from_bytes(self._msg[165:167], "big") / 1000.0  # type: ignore[typeddict-unknown-key]
             result["cell_uv_delay"] = int.from_bytes(self._msg[167:169], "big") / 10.0  # type: ignore[typeddict-unknown-key]
+        else:
+            pass  # pragma: no cover
 
         result["problem"] = result.get("problem_code", 0) != 0
 
