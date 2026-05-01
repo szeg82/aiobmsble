@@ -118,7 +118,7 @@ class BMS(BaseBMS):
             offset=2730,
             divider=10,
         )
-        
+
         if len(self._msg) >= 111:
             mos_temp = (int.from_bytes(self._msg[107:109], byteorder="big") - 2730) / 10.0
             ambient_temp = (int.from_bytes(self._msg[109:111], byteorder="big") - 2730) / 10.0
