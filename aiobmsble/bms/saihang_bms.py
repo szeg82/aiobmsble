@@ -133,22 +133,22 @@ class BMS(BaseBMS):
             result["dischrg_mosfet"] = bool(status_bits & 0x0400)
 
         if len(self._msg) >= 169:
-            result["pack_ov_alarm"] = int.from_bytes(self._msg[125:129], "big") / 1000.0
-            result["pack_ov_protection"] = int.from_bytes(self._msg[129:133], "big") / 1000.0
-            result["pack_ov_release"] = int.from_bytes(self._msg[133:137], "big") / 1000.0
-            result["pack_ov_delay"] = int.from_bytes(self._msg[137:139], "big") / 10.0
-            result["cell_ov_alarm"] = int.from_bytes(self._msg[139:141], "big") / 1000.0
-            result["cell_ov_protection"] = int.from_bytes(self._msg[141:143], "big") / 1000.0
-            result["cell_ov_release"] = int.from_bytes(self._msg[143:145], "big") / 1000.0
-            result["cell_ov_delay"] = int.from_bytes(self._msg[145:147], "big") / 10.0
-            result["pack_uv_alarm"] = int.from_bytes(self._msg[147:151], "big") / 1000.0
-            result["pack_uv_protection"] = int.from_bytes(self._msg[151:155], "big") / 1000.0
-            result["pack_uv_release"] = int.from_bytes(self._msg[155:159], "big") / 1000.0
-            result["pack_uv_delay"] = int.from_bytes(self._msg[159:161], "big") / 10.0
-            result["cell_uv_alarm"] = int.from_bytes(self._msg[161:163], "big") / 1000.0
-            result["cell_uv_protection"] = int.from_bytes(self._msg[163:165], "big") / 1000.0
-            result["cell_uv_release"] = int.from_bytes(self._msg[165:167], "big") / 1000.0
-            result["cell_uv_delay"] = int.from_bytes(self._msg[167:169], "big") / 10.0
+            result["pack_ov_alarm"] = int.from_bytes(self._msg[125:129], "big") / 1000.0  # type: ignore[typeddict-unknown-key]
+            result["pack_ov_protection"] = int.from_bytes(self._msg[129:133], "big") / 1000.0  # type: ignore[typeddict-unknown-key]
+            result["pack_ov_release"] = int.from_bytes(self._msg[133:137], "big") / 1000.0  # type: ignore[typeddict-unknown-key]
+            result["pack_ov_delay"] = int.from_bytes(self._msg[137:139], "big") / 10.0  # type: ignore[typeddict-unknown-key]
+            result["cell_ov_alarm"] = int.from_bytes(self._msg[139:141], "big") / 1000.0  # type: ignore[typeddict-unknown-key]
+            result["cell_ov_protection"] = int.from_bytes(self._msg[141:143], "big") / 1000.0  # type: ignore[typeddict-unknown-key]
+            result["cell_ov_release"] = int.from_bytes(self._msg[143:145], "big") / 1000.0  # type: ignore[typeddict-unknown-key]
+            result["cell_ov_delay"] = int.from_bytes(self._msg[145:147], "big") / 10.0  # type: ignore[typeddict-unknown-key]
+            result["pack_uv_alarm"] = int.from_bytes(self._msg[147:151], "big") / 1000.0  # type: ignore[typeddict-unknown-key]
+            result["pack_uv_protection"] = int.from_bytes(self._msg[151:155], "big") / 1000.0  # type: ignore[typeddict-unknown-key]
+            result["pack_uv_release"] = int.from_bytes(self._msg[155:159], "big") / 1000.0  # type: ignore[typeddict-unknown-key]
+            result["pack_uv_delay"] = int.from_bytes(self._msg[159:161], "big") / 10.0  # type: ignore[typeddict-unknown-key]
+            result["cell_uv_alarm"] = int.from_bytes(self._msg[161:163], "big") / 1000.0  # type: ignore[typeddict-unknown-key]
+            result["cell_uv_protection"] = int.from_bytes(self._msg[163:165], "big") / 1000.0  # type: ignore[typeddict-unknown-key]
+            result["cell_uv_release"] = int.from_bytes(self._msg[165:167], "big") / 1000.0  # type: ignore[typeddict-unknown-key]
+            result["cell_uv_delay"] = int.from_bytes(self._msg[167:169], "big") / 10.0  # type: ignore[typeddict-unknown-key]
 
         result["problem"] = result.get("problem_code", 0) != 0
 
