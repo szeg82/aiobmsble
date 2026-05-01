@@ -31,9 +31,11 @@ class BMS(BaseBMS):
         BMSDp("battery_level", 13, 2, False),
         BMSDp("battery_health", 15, 2, False),
         BMSDp("cycle_charge", 17, 4, False, lambda x: x / 100),
-        BMSDp("design_capacity", 25, 4, False, lambda x: x // 100),
+        BMSDp("total_charge", 21, 4, False, lambda x: x / 100),
+        BMSDp("design_capacity", 25, 4, False, lambda x: x / 100),
         BMSDp("cycles", 29, 2, False),
         BMSDp("problem_code", 31, 2, False, lambda x: ~x & 0xFFFF),
+        BMSDp("balancer", 41, 2, False),
         BMSDp("cell_count", 43, 2, False, lambda x: min(x, BMS._MAX_CELLS)),
         BMSDp("temp_sensors", 85, 2, False, lambda x: min(x, BMS._MAX_TEMP)),
     )
@@ -103,18 +105,51 @@ class BMS(BaseBMS):
 
     async def _async_update(self) -> BMSSample:
         """Update battery status information."""
-        await self._await_msg(BMS._HEAD + BMS._cmd_modbus(count=0x48))
+        await self._await_msg(BMS._HEAD + BMS._cmd_modbus(count=0x53))
 
         result: BMSSample = BMS._decode_data(BMS._FIELDS, self._msg)
         result["cell_voltages"] = BMS._cell_voltages(
             self._msg, cells=result.get("cell_count", 0), start=45
         )
-        result["temp_values"] = BMS._temp_values(
+        temp_list = BMS._temp_values(
             self._msg,
             values=result.get("temp_sensors", 0),
             start=87,
-            offset=2731,
+            offset=2730,
             divider=10,
         )
+        
+        if len(self._msg) >= 111:
+            mos_temp = (int.from_bytes(self._msg[107:109], byteorder="big") - 2730) / 10.0
+            ambient_temp = (int.from_bytes(self._msg[109:111], byteorder="big") - 2730) / 10.0
+            temp_list.extend([mos_temp, ambient_temp])
+
+        result["temp_values"] = temp_list
+        result["temp_sensors"] = len(temp_list)
+
+        if len(self._msg) >= 39:
+            status_bits = int.from_bytes(self._msg[37:39], byteorder="big")
+            result["chrg_mosfet"] = bool(status_bits & 0x0200)
+            result["dischrg_mosfet"] = bool(status_bits & 0x0400)
+
+        if len(self._msg) >= 169:
+            result["pack_ov_alarm"] = int.from_bytes(self._msg[125:129], "big") / 1000.0
+            result["pack_ov_protection"] = int.from_bytes(self._msg[129:133], "big") / 1000.0
+            result["pack_ov_release"] = int.from_bytes(self._msg[133:137], "big") / 1000.0
+            result["pack_ov_delay"] = int.from_bytes(self._msg[137:139], "big") / 10.0
+            result["cell_ov_alarm"] = int.from_bytes(self._msg[139:141], "big") / 1000.0
+            result["cell_ov_protection"] = int.from_bytes(self._msg[141:143], "big") / 1000.0
+            result["cell_ov_release"] = int.from_bytes(self._msg[143:145], "big") / 1000.0
+            result["cell_ov_delay"] = int.from_bytes(self._msg[145:147], "big") / 10.0
+            result["pack_uv_alarm"] = int.from_bytes(self._msg[147:151], "big") / 1000.0
+            result["pack_uv_protection"] = int.from_bytes(self._msg[151:155], "big") / 1000.0
+            result["pack_uv_release"] = int.from_bytes(self._msg[155:159], "big") / 1000.0
+            result["pack_uv_delay"] = int.from_bytes(self._msg[159:161], "big") / 10.0
+            result["cell_uv_alarm"] = int.from_bytes(self._msg[161:163], "big") / 1000.0
+            result["cell_uv_protection"] = int.from_bytes(self._msg[163:165], "big") / 1000.0
+            result["cell_uv_release"] = int.from_bytes(self._msg[165:167], "big") / 1000.0
+            result["cell_uv_delay"] = int.from_bytes(self._msg[167:169], "big") / 10.0
+
+        result["problem"] = result.get("problem_code", 0) != 0
 
         return result
