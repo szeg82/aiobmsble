@@ -35,6 +35,8 @@ class BMS(BaseBMS):
         BMSDp("design_capacity", 25, 4, False, lambda x: x / 100),
         BMSDp("cycles", 29, 2, False),
         BMSDp("problem_code", 31, 2, False, lambda x: ~x & 0xFFFF),
+        BMSDp("chrg_mosfet", 37, 2, False, lambda x: bool(x & 0x0200)),
+        BMSDp("dischrg_mosfet", 37, 2, False, lambda x: bool(x & 0x0400)),
         BMSDp("balancer", 41, 2, False),
         BMSDp("cell_count", 43, 2, False, lambda x: min(x, BMS._MAX_CELLS)),
         BMSDp("temp_sensors", 85, 2, False, lambda x: min(x, BMS._MAX_TEMP)),
@@ -125,7 +127,7 @@ class BMS(BaseBMS):
         """Update battery status information."""
         for attempt in range(3):
             try:
-                await self._await_msg(BMS._HEAD + BMS._cmd_modbus(count=0x53))
+                await self._await_msg(BMS._HEAD + BMS._cmd_modbus(count=0x48))
                 break
             except TimeoutError:
                 if attempt == 2:
@@ -143,43 +145,11 @@ class BMS(BaseBMS):
             divider=10,
         )
 
-        if len(self._msg) >= 111:
-            mos_temp = (int.from_bytes(self._msg[107:109], byteorder="big") - 2730) / 10.0
-            ambient_temp = (int.from_bytes(self._msg[109:111], byteorder="big") - 2730) / 10.0
-            temp_list.extend([mos_temp, ambient_temp])
-        else:
-            pass  # pragma: no cover
-
         result["temp_values"] = temp_list
         result["temp_sensors"] = len(temp_list)
 
-        if len(self._msg) >= 39:
-            status_bits = int.from_bytes(self._msg[37:39], byteorder="big")
-            result["chrg_mosfet"] = bool(status_bits & 0x0200)
-            result["dischrg_mosfet"] = bool(status_bits & 0x0400)
-        else:
-            pass  # pragma: no cover
-
-        if len(self._msg) >= 169:
-            result["pack_ov_alarm"] = int.from_bytes(self._msg[125:129], "big") / 1000.0  # type: ignore[typeddict-unknown-key]
-            result["pack_ov_protection"] = int.from_bytes(self._msg[129:133], "big") / 1000.0  # type: ignore[typeddict-unknown-key]
-            result["pack_ov_release"] = int.from_bytes(self._msg[133:137], "big") / 1000.0  # type: ignore[typeddict-unknown-key]
-            result["pack_ov_delay"] = int.from_bytes(self._msg[137:139], "big") / 10.0  # type: ignore[typeddict-unknown-key]
-            result["cell_ov_alarm"] = int.from_bytes(self._msg[139:141], "big") / 1000.0  # type: ignore[typeddict-unknown-key]
-            result["cell_ov_protection"] = int.from_bytes(self._msg[141:143], "big") / 1000.0  # type: ignore[typeddict-unknown-key]
-            result["cell_ov_release"] = int.from_bytes(self._msg[143:145], "big") / 1000.0  # type: ignore[typeddict-unknown-key]
-            result["cell_ov_delay"] = int.from_bytes(self._msg[145:147], "big") / 10.0  # type: ignore[typeddict-unknown-key]
-            result["pack_uv_alarm"] = int.from_bytes(self._msg[147:151], "big") / 1000.0  # type: ignore[typeddict-unknown-key]
-            result["pack_uv_protection"] = int.from_bytes(self._msg[151:155], "big") / 1000.0  # type: ignore[typeddict-unknown-key]
-            result["pack_uv_release"] = int.from_bytes(self._msg[155:159], "big") / 1000.0  # type: ignore[typeddict-unknown-key]
-            result["pack_uv_delay"] = int.from_bytes(self._msg[159:161], "big") / 10.0  # type: ignore[typeddict-unknown-key]
-            result["cell_uv_alarm"] = int.from_bytes(self._msg[161:163], "big") / 1000.0  # type: ignore[typeddict-unknown-key]
-            result["cell_uv_protection"] = int.from_bytes(self._msg[163:165], "big") / 1000.0  # type: ignore[typeddict-unknown-key]
-            result["cell_uv_release"] = int.from_bytes(self._msg[165:167], "big") / 1000.0  # type: ignore[typeddict-unknown-key]
-            result["cell_uv_delay"] = int.from_bytes(self._msg[167:169], "big") / 10.0  # type: ignore[typeddict-unknown-key]
-        else:
-            pass  # pragma: no cover
-
-        result["problem"] = result.get("problem_code", 0) != 0
+        mos_temp = (int.from_bytes(self._msg[107:109], byteorder="big") - 2730) / 10.0
+        ambient_temp = (int.from_bytes(self._msg[109:111], byteorder="big") - 2730) / 10.0
+        temp_list.extend([mos_temp, ambient_temp])
 
         return result

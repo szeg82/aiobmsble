@@ -31,7 +31,7 @@ The polling command structure is:
 - `01`: Device ID
 - `03`: Modbus Function (Read Holding Registers)
 - `00 00`: Starting Register (Address 0)
-- `00 53`: Number of Registers to read (83 registers = 166 bytes of data). *Note: Earlier implementations only requested `0x48` (72 registers / 144 bytes), which cut off the Voltage Protection Settings. Requesting `0x53` ensures the entire settings block is retrieved.*
+- `00 48`: Number of Registers to read (72 registers = 144 bytes of data). *Note: The implementations only requested `0x48` (72 registers / 144 bytes), which cut off the Voltage Protection Settings. Requesting `0x53` ensures the entire settings block is retrieved.*
 - `CRC16`: Standard Modbus CRC-16-CCITT
 
 ### Response Fragmentation
@@ -56,11 +56,8 @@ The 16-bit word at offset 37 represents the `Fault & Switch Status Bitmask`.
 - **Bit 10 (`0x0400`)**: Discharge MOSFET state
 - **Bit 13 (`0x2000`)**: AC IN state
 
-### 4. The "Padding" Mystery
-Bytes 111 to 124 contain `FFFFFFFF...` padding. This is because the BMS's internal memory map is contiguous. Telemetry data ends at byte 110, and the static Voltage Protection Settings start at byte 125. The gap between these two regions simply contains unused/reserved Modbus registers. By requesting a single large block of `0x53` registers, the driver naturally bridges this gap and retrieves both telemetry and settings simultaneously.
-
-### 5. Extended Capabilities
+### 4. Extended Capabilities
 The driver successfully maps the following extended fields not found on basic BMS units:
 - `balancer`: Live bitmask of which specific cells are currently being actively balanced.
 - `total_charge`: Total Ah throughput over the entire lifecycle of the battery.
-- `pack_ov_alarm` ... `cell_uv_delay`: 16 individual Voltage Protection settings dynamically extracted if the payload length permits.
+
