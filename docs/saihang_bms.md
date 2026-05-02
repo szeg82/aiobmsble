@@ -2,9 +2,8 @@
 
 ## Overview
 
-The Saihang BMS (often branded as Anenji) uses a custom Bluetooth Low Energy protocol that is heavily based on Modbus RTU, but wrapped in a proprietary frame starting with `A5 A5`. The BMS streams a large, contiguous block of registers containing real-time telemetry, battery parameters, and protection settings.
-
-During the development and reverse-engineering of the `aiobmsble` driver, the complete Modbus memory map was extracted from the official Android application (internally referred to as the "BlueCat" protocol).
+The Saihang BMS (often branded as Anenji) uses a custom Bluetooth Low Energy protocol that is heavily based on Modbus RTU, but wrapped in a proprietary frame starting with `A5 A5`. 
+The BMS streams a large, contiguous block of registers containing real-time telemetry, battery parameters, and protection settings.
 
 ## Device Identification
 
