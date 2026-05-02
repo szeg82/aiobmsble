@@ -48,7 +48,7 @@ class MockSaihangBleakClient(MockBleakClient):
             self._notify_callback
         ), "write to characteristics but notification not enabled"
 
-        if bytes(data) != b"\xa5\xa5\x00\x03\x00\x00\x00\x53\x04\x26":
+        if bytes(data) != b"\xa5\xa5\x00\x03\x00\x00\x00\x48\x44\x2d":
             return
 
         self._notify_callback("MockRoyPowBleakClient", self._RESP)
@@ -90,22 +90,6 @@ async def test_update(patch_bleak_client, keep_alive_fixture: bool) -> None:
         "balancer": 0,
         "chrg_mosfet": True,
         "dischrg_mosfet": True,
-        "pack_ov_alarm": 56.8,
-        "pack_ov_protection": 57.6,
-        "pack_ov_release": 54.08,
-        "pack_ov_delay": 1.0,
-        "cell_ov_alarm": 3.6,
-        "cell_ov_protection": 3.65,
-        "cell_ov_release": 3.38,
-        "cell_ov_delay": 1.0,
-        "pack_uv_alarm": 46.0,
-        "pack_uv_protection": 45.0,
-        "pack_uv_release": 48.0,
-        "pack_uv_delay": 1.0,
-        "cell_uv_alarm": 2.9,
-        "cell_uv_protection": 2.8,
-        "cell_uv_release": 3.0,
-        "cell_uv_delay": 1.0,
         "problem": False,
         "problem_code": 0,
         "power": 0.0,

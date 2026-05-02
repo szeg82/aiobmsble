@@ -52,7 +52,6 @@ class BMS(BaseBMS):
         """Initialize private BMS members."""
         super().__init__(ble_device, keep_alive, secret, logger_name)
         self._msg: bytes = b""
-        self._frame: bytearray = bytearray()
 
     @staticmethod
     def matcher_dict_list() -> list[MatcherPattern]:
@@ -84,54 +83,31 @@ class BMS(BaseBMS):
         self, _sender: BleakGATTCharacteristic, data: bytearray
     ) -> None:
         """Handle the RX characteristics notify event (new data arrives)."""
-        if data.startswith(BMS._HEAD):
-            self._frame.clear()
+        self._log.debug("RX BLE data: %s", data)
 
-        self._frame.extend(data)
-        self._log.debug(
-            "RX BLE data (%s, total %d): %s",
-            "start" if data.startswith(BMS._HEAD) else "cnt.",
-            len(self._frame),
-            data,
-        )
-
-        if not self._frame.startswith(BMS._HEAD):
-            self._log.debug("RX BLE packet rejected (not a header): %s", data)
-            self._frame.clear()
+        if not data.startswith(BMS._HEAD):
+            self._log.debug("incorrect SOF")
             return
 
-        if len(self._frame) < 5:
+        if len(data) < BMS._MIN_FRAME_LEN or len(data) != BMS._MIN_FRAME_LEN + data[4]:
+            self._log.debug("incorrect frame length %d", len(data))
             return
-
-        expected_len: Final[int] = BMS._MIN_FRAME_LEN + self._frame[4]
-        if len(self._frame) < expected_len:
-            return
-
-        frame: Final[bytearray] = self._frame[:expected_len]
 
         if not self._check_integrity(
-            frame,
+            data,
             crc_modbus,
             slice(2, -2),
             slice(-2, None),
             "little",
         ):
-            self._frame.clear()
             return
 
-        self._msg = bytes(frame)
+        self._msg = bytes(data)
         self._msg_event.set()
-        self._frame.clear()
 
     async def _async_update(self) -> BMSSample:
         """Update battery status information."""
-        for attempt in range(3):
-            try:
-                await self._await_msg(BMS._HEAD + BMS._cmd_modbus(count=0x48))
-                break
-            except TimeoutError:
-                if attempt == 2:
-                    raise
+        await self._await_msg(BMS._HEAD + BMS._cmd_modbus(count=0x48))
 
         result: BMSSample = BMS._decode_data(BMS._FIELDS, self._msg)
         result["cell_voltages"] = BMS._cell_voltages(
@@ -144,9 +120,6 @@ class BMS(BaseBMS):
             offset=2730,
             divider=10,
         )
-
-        result["temp_values"] = temp_list
-        result["temp_sensors"] = len(temp_list)
 
         mos_temp = (int.from_bytes(self._msg[107:109], byteorder="big") - 2730) / 10.0
         ambient_temp = (int.from_bytes(self._msg[109:111], byteorder="big") - 2730) / 10.0
