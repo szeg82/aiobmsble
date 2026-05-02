@@ -113,7 +113,7 @@ class BMS(BaseBMS):
         result["cell_voltages"] = BMS._cell_voltages(
             self._msg, cells=result.get("cell_count", 0), start=45
         )
-        temp_list = BMS._temp_values(
+        result["temp_values"] = BMS._temp_values(
             self._msg,
             values=result.get("temp_sensors", 0),
             start=87,
@@ -123,9 +123,7 @@ class BMS(BaseBMS):
 
         mos_temp = (int.from_bytes(self._msg[107:109], byteorder="big") - 2730) / 10.0
         ambient_temp = (int.from_bytes(self._msg[109:111], byteorder="big") - 2730) / 10.0
-        temp_list.extend([mos_temp, ambient_temp])
-
-        result["temp_values"] = temp_list
-        result["temp_sensors"] = len(temp_list)
+        result["temp_values"].extend([mos_temp, ambient_temp])
+        result["temp_sensors"] = len(result["temp_values"])
 
         return result
