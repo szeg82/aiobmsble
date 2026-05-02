@@ -125,4 +125,7 @@ class BMS(BaseBMS):
         ambient_temp = (int.from_bytes(self._msg[109:111], byteorder="big") - 2730) / 10.0
         temp_list.extend([mos_temp, ambient_temp])
 
+        result["temp_values"] = temp_list
+        result["temp_sensors"] = len(temp_list)
+
         return result
