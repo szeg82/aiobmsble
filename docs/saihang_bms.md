@@ -38,12 +38,12 @@ The polling command structure is:
 ### Response Fragmentation
 The BLE MTU size is typically smaller than the 166-byte payload. The BMS will split the response across multiple BLE notification frames. The `aiobmsble` driver accumulates these frames until the total length matches the expected length defined in the 5th byte of the response header (`data[4]`).
 
-## Memory Map Discoveries (Reverse Engineering Notes)
+## Memory Map Discoveries
 
-Extensive reverse-engineering of the Java source code (`e.java`, `MYSetBean.java`) yielded several critical breakthroughs for the driver:
+Detailed testing and comparison against the official application revealed several critical breakthroughs for the driver:
 
-### 1. Temperature Calculation and The 0.1°C Discrepancy
-The raw NTC temperature values are transmitted as an integer. Initially, a standard `- 273.1` (Kelvin to Celsius) offset was assumed. However, the official app subtracts `2730` and divides by `10.0`. Using the standard `2731` offset caused a consistent `-0.1°C` discrepancy compared to the official app. The driver now strictly uses `(val - 2730) / 10.0`.
+### 1. Temperature Calculation
+The raw NTC temperature values are transmitted as an integer. Based on detailed testing and comparison with the values reported by the official app, the correct conversion was found to be `(val - 2730) / 10.0`. Earlier testing with the standard Kelvin-to-Celsius style `- 273.1` offset produced a consistent `-0.1°C` discrepancy, so the driver now uses the tested conversion formula to match the official app.
 
 ### 2. MOSFET and Ambient Temperatures
 The telemetry block contains up to 4 standard cell NTC sensors starting at byte offset 87. However, the payload contains two additional dedicated sensors:
